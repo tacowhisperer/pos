@@ -105,3 +105,4 @@ dist
 
 #NW.js binary directory
 nwjs-*/
+bin/
