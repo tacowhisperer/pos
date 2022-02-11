@@ -1,5 +1,140 @@
+<!DOCTYPE html>
 <html>
+<head>
+	<!-- Can't have a program window without a name or an icon or something to describe it. -->
+	<title id="window_title">MMakr</title>
+
+	<!-- Allows for capture of keyboard input and exports it to Node.js context -->
+	<script type="text/javascript" src="input/key-command.js"></script>
+
+	<!-- Styling for keys have been pressed and whether they're being actively pressed or not -->
+	<style type="text/css">
+		* {
+			font-family: monospace;
+		}
+
+		.active_key {
+			color: black;
+			font-weight: bold;
+		}
+
+		#keyboard {
+			color: gray;
+			list-style: none;
+		}
+	</style>
+</head>
 <body>
-	<h1>Hello, world!</h1>
+	<h1 id="os"></h1>
+	<h3 id="keydown_disp"></h3>
+	<h3 id="keyup_disp"></h3>
+	<ul id="keyboard"></ul>
+
+	<footer>
+		<script type="text/javascript">
+			// Creates a standardized object that keeps track of when a key was pressed down and when a key was released
+			function newKey() {
+				return {downTime: Date.now(), upTime: -Infinity};
+			}
+
+			// Tests to see if a register entry created by the newKey function is still "down"
+			function keyIsDown(keyRegisterEntry) {
+				return keyRegisterEntry.upTime < keyRegisterEntry.downTime;
+			}
+
+			// Registers the input key to the provided register as being "down"
+			function activateKey(key, register) {
+				// Only add an entry to the key register if it's the first time it's pressed/hasn't been released
+				if (!(key in register && keyIsDown(register[key])))
+					register[key] = newKey();
+			}
+
+			// Flips an active "down" registration from the given register for the provided key
+			function deactivateKey(key, register) {
+				// Only deactivate a key that has been previously registered
+				if (key in register)
+					register[key].upTime = Date.now();
+			}
+
+			// Straps the keys register to the DOM for debugging/development
+			function strapActiveKeys(register, ul) {
+				return {
+					__dom: ul,
+					__register: register,
+
+					print: function() {
+						this.__dom.innerHTML = '';
+
+						for (key in this.__register) {
+							const line = document.createElement('li');
+							line.appendChild(document.createTextNode(key));
+
+							if (keyIsDown(this.__register[key]))
+								line.classList.add('active_key');
+							else
+								line.classList.remove('active_key');
+							
+							this.__dom.appendChild(line);
+						}
+					}
+				};
+			}
+
+			// Keeps track of which keys are being actively held down, and the time they were activated.
+			const activeKeys = {};
+
+			// DOM elements used for development/debugging.
+			const keydownDisp = document.getElementById('keydown_disp');
+			const keyupDisp = document.getElementById('keyup_disp');
+			const keyboard = document.getElementById('keyboard');
+
+			// Strap the active keys to the DOM
+			const outputToDOM = strapActiveKeys(activeKeys, keyboard);
+
+			window.addEventListener('keydown', e => {
+				// Update the active keys register
+				activateKey(e.code, activeKeys);
+
+				// Keyboard display
+				outputToDOM.print();
+
+				// Actively read keydown data
+				const text = `KEYDOWN - ${e.code}`;
+				const textNode = document.createTextNode(text);
+				keydownDisp.innerHTML = '';
+				keydownDisp.appendChild(textNode);
+			});
+
+			window.addEventListener('keyup', e => {
+				// Update the active keys register
+				deactivateKey(e.code, activeKeys);
+
+				// Keyboard display
+				outputToDOM.print();
+
+				// Actively read keyup data
+				const text = `KEYUP - ${e.code}`;
+				const textNode = document.createTextNode(text);
+				keyupDisp.innerHTML = '';
+				keyupDisp.appendChild(textNode);
+			});
+
+			nw.Window.get().on('blur', () => {
+				console.log('BLUR');
+				
+				// Artificially release any pressed keys when the window loses focus due to OS keyboard shortcuts
+				for (key in activeKeys) {
+					activeKeys[key].upTime = Infinity;
+				}
+
+				outputToDOM.print();
+			});
+
+			// Update OS information on startup
+			const os = document.getElementById('os');
+			const osText = document.createTextNode(`You are running on ${require('os').platform()}`);
+			os.appendChild(osText);
+		</script>
+	</footer>
 </body>
 </html>

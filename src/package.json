@@ -2,7 +2,7 @@
   "name": "mmakr",
   "version": "1.0.0",
   "description": "A P.O.S. system designed on web technologies and to be portable to any operating system.",
-  "main": "index.js",
+  "main": "main.js",
   "scripts": {
     "test": "exit 1"
   },

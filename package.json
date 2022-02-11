@@ -4,7 +4,7 @@
   "description": "A P.O.S. system designed on web technologies and to be portable to any operating system.",
   "main": "index.js",
   "scripts": {
-    "test": "node main.js"
+    "test": "node index.js"
   },
   "repository": {
     "type": "git",

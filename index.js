@@ -19,7 +19,16 @@ function execute(command, params) {
 	});
 }
 
-const NW_BIN = 'bin\\nw.exe';
+// Binaries available for execution
+const NW_BINS = ['nwjs-sdk-v0.60.0-win-x64', 'production'];;
+
+// Which binary to use for this run
+const NW_MODE = 0;
+
+// Final location of the binary that will execute the application
+const NW_BIN = `bin\\${NW_BINS[NW_MODE]}\\nw.exe`;
+
+// Final location of the directory that cointains the necessary package.json and index.html files for NW.js
 const NW_DIR = 'src';
 
 // Execute the NW.js binary executable.
