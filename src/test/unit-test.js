@@ -55,6 +55,16 @@ function unit_test(whitelist) {
 		return false;
 	}
 
+	function stringify(collection) {
+		const brackets = collection instanceof Array ? '[]' : collection instanceof Set ? '{}' : '""';
+
+		if (brackets === '""')
+			return `"${collection}"`;
+
+		const content = [...collection].map(e => stringify(e));
+		return `${brackets.charAt(0)}${content}${brackets.charAt(1)}`;
+	}
+
 	function test(input, expected) {
 		if (fn(testID++)) {
 			if ((testID - 1) > 0)
@@ -66,7 +76,7 @@ function unit_test(whitelist) {
 			console.log('');
 			
 			try {
-				console.log(`\tOutput: ${assert(expected, (str) => JSON.stringify(parseCollection(str)), deepEquals, input)}`);
+				console.log(`\tOutput: ${assert(expected, (str) => stringify(parseCollection(str)), deepEquals, input)}`);
 			} catch (err) {
 				console.log(`\tTest Output Failure: Test failed with error:`);
 				console.error(err);
