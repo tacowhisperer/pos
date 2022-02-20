@@ -5,7 +5,7 @@
 	<title id="window_title">MMakr</title>
 
 	<!-- Allows for capture of keyboard input and exports it to Node.js context -->
-	<script type="text/javascript" src="input/key-command.js"></script>
+	<script type="text/javascript" src="input/key-commander.js"></script>
 
 	<!-- Styling for keys have been pressed and whether they're being actively pressed or not -->
 	<style type="text/css">
@@ -121,7 +121,7 @@
 
 			nw.Window.get().on('blur', () => {
 				console.log('BLUR');
-				
+
 				// Artificially release any pressed keys when the window loses focus due to OS keyboard shortcuts
 				for (key in activeKeys) {
 					activeKeys[key].upTime = Infinity;
