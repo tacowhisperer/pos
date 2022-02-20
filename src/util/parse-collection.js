@@ -110,7 +110,6 @@ function parseCollection(str) {
 		}
 
 		get children() {
-			// return new this.#children.constructor(...this.#children);
 			return this.#children;
 		}
 
@@ -120,9 +119,6 @@ function parseCollection(str) {
 
 		addChild(child) {
 			child.parent = this;
-
-			// // Construct a new Node with the newly created child added to the children collection
-			// return new Node(this.#parent, new this.#children.constructor(...[...this.#children].concat([fn(child)])));
 		}
 
 		isLeaf() {
@@ -184,10 +180,6 @@ function parseCollection(str) {
 			super(RootNode.ROOT, new Array());
 		}
 
-		// collapse() {
-		// 	return this.children.map(child => child.collapse());
-		// }
-
 		addChild(child) {
 			super.addChild(child);
 			this.children.push(child);
@@ -196,16 +188,16 @@ function parseCollection(str) {
 
 	class SetNode extends Node {
 		constructor() {
-			super(RootNode.ROOT, new Set());
+			super(RootNode.ROOT, new Array());
 		}
-
-		// collapse() {
-		// 	return new Set(...[...this.children].map(child => child.collapse()));
-		// }
 
 		addChild(child) {
 			super.addChild(child);
-			this.children.add(child);
+			this.children.push(child);
+		}
+
+		collapse() {
+			return new Set(super.collapse());
 		}
 	}
 
@@ -229,19 +221,6 @@ function parseCollection(str) {
 			return true;
 		}
 	}
-
-	// Returns a copy of the input collection with the item added at the beginning, if applicable
-	// function concat(item, collection) {
-	// 	if (collection instanceof Array)
-	// 		return collection.concat([item]);
-	// 		// return [item].concat(collection);
-
-	// 	else if (collection instanceof Set)
-	// 		return new Set([...collection, item])
-	// 		// return new Set([item, ...collection])
-
-	// 	return item;
-	// }
 
 	// Parses the tokenized array into its specified data structure.
 	const PLACED = true;
@@ -280,19 +259,14 @@ function parseCollection(str) {
 					
 					return parseCollectionHelper(tail, collection, arrayLevel, setLevel + 1, PLACED);
 
-					// for (const element of content)
-					// 	collection.add(element);
-
-					// return concat(collection, dataStruct);
-
 				case Token.CLOSE_ARRAY:
-					if (!(dataStruct.children instanceof Array))
+					if (!(dataStruct instanceof ArrayNode))
 						throw 'SyntaxError: Unexpected CLOSE_ARRAY token encountered.';
 
 					return parseCollectionHelper(tail, dataStruct.parent, arrayLevel - 1, setLevel, CONSUMED);
 
 				case Token.CLOSE_SET:
-					if (!(dataStruct.children instanceof Set))
+					if (!(dataStruct instanceof SetNode))
 						throw 'SyntaxError: Unexpected CLOSE_SET token encountered.';
 
 					return parseCollectionHelper(tail, dataStruct.parent, arrayLevel, setLevel - 1, CONSUMED);
