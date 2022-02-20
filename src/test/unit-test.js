@@ -104,5 +104,8 @@ function unit_test(whitelist) {
 
 	// Test #6
 	test('[}', Output.NONE);
+
+	// Test #7
+	test(',[]', Output.NONE);
 }
 

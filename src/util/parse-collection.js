@@ -272,7 +272,7 @@ function parseCollection(str) {
 					return parseCollectionHelper(tail, dataStruct.parent, arrayLevel, setLevel - 1, CONSUMED);
 
 				case Token.COMMA:
-					if (nextValue === PLACED)
+					if (nextValue === PLACED || (arrayLevel === 0 && setLevel === 0))
 						throw 'SyntaxError: Unexpected COMMA token encountered.';
 
 					return parseCollectionHelper(tail, dataStruct, arrayLevel, setLevel, PLACED);
