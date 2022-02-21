@@ -5,7 +5,7 @@
 	<title id="window_title">MMakr</title>
 
 	<!-- Allows for capture of keyboard input and exports it to Node.js context -->
-	<script type="text/javascript" src="input/key-commander.js"></script>
+	<!-- <script type="text/javascript" src="input/key-commander.js"></script> -->
 
 	<!-- Styling for keys have been pressed and whether they're being actively pressed or not -->
 	<style type="text/css">
@@ -31,7 +31,10 @@
 	<ul id="keyboard"></ul>
 
 	<footer>
-		<script type="text/javascript">
+		<script type="module">
+			import {myFunction} from './input/key-commander.js';
+			myFunction();
+
 			// Creates a standardized object that keeps track of when a key was pressed down and when a key was released
 			function newKey() {
 				return {downTime: Date.now(), upTime: -Infinity};
@@ -65,7 +68,7 @@
 					print: function() {
 						this.__dom.innerHTML = '';
 
-						for (key in this.__register) {
+						for (const key in this.__register) {
 							const line = document.createElement('li');
 							line.appendChild(document.createTextNode(key));
 
@@ -123,7 +126,7 @@
 				console.log('BLUR');
 
 				// Artificially release any pressed keys when the window loses focus due to OS keyboard shortcuts
-				for (key in activeKeys) {
+				for (const key in activeKeys) {
 					activeKeys[key].upTime = Infinity;
 				}
 

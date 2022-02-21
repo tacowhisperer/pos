@@ -1,16 +1,21 @@
 /**
+ * MMakr Library
+ * https://github.com/tacowhisperer
+ *
+ * Pollutes "mmakr" global namespace, if applicable.
+ * 
+ * Date: Feb 21, 2022
  * @author tacowhisperer
  */
-
-/**
- * Parses a mathematical representation of a vector and a set into a JavaScript Array and Set. This method is only
- * exposed through the module.
- *
- * @param {String} str The string to parse
- *
- * @return {Collection} A collection consisting of Array and Set objects of the input string.
- */
 (function (mod, win) {
+	/**
+	 * Parses a mathematical representation of a vector and a set into a JavaScript Array and Set. This method is only
+	 * exposed through the module.
+	 *
+	 * @param {String} str The string to parse
+	 *
+	 * @return {Collection} A collection consisting of Array and Set objects of the input string.
+	 */
 	function parseCollection(str) {
 		// Holds all of the valid tokens of the incoming string
 		class Token {
@@ -303,10 +308,15 @@
 		return parseCollectionHelper(tokenizeCollection(str), new ArrayNode()).collapse()[0];
 	}
 
+	// Export the parseCollection 
 	if (typeof mod === 'object' && typeof mod.exports === 'object')
-		mod.exports = parseCollection;
+		mod.exports = {mmakr: parseCollection};
 
-	else if (typeof win === 'object' && typeof win.document === 'object')
+	else if (typeof win === 'object' && typeof win.document === 'object') {
+		if (win.mmakr === 'undefined')
+			win.mmakr = {};
+
 		win.mmakr.parseCollection = parseCollection;
+	}
 
 })(module, window);

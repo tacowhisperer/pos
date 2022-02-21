@@ -154,7 +154,11 @@ function KeyCommander(DOMObj) {
 	};
 }
 
+function myFunction() {
+	console.log('I am defined in key-commander.js!');
+}
 
+export {myFunction};
 
 // Export the constructor for access in other modules.
 // exports.keycommand = keycommandFactory;
