@@ -29,6 +29,9 @@
 		return new DataView(buffer)[`get${type}`](byteOffset, isLittleEndian);
 	}
 
+	// Max message limit
+	const M_LIMIT = 340282366920938463463374607431768211456n;
+
 	// Mixing scheduler SIGMA
 	const SIGMA = [
 		[  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15 ],
@@ -59,7 +62,14 @@
 	}
 
 	function Compress(h, chunk, t, IsLastBlock) {
-		// TODO: Implement this
+		// Setup local work vector V
+		const V = new ArrayBuffer(2 * 8 * _64_BITS);
+		for (let i = 0; i < 8; i++) {
+			typedArrayWrite('BigUint64', V, i * _64_BITS, typedArrayRead('BigUint64', h, i * _64_BITS));
+			typedArrayWrite('BigUint64', V, (i + 8) * _64_BITS, typedArrayRead('BigUint64', IV, i * _64_BITS));
+		}
+
+		// TODO: Finish this implementation.
 	}
 	
 	function blake2b(msg, key, hashBytes = 32) {
@@ -83,7 +93,8 @@
 
 		// Ensure that we have the correct message length size in bytes
 		const cbMessageLen = utf8MArray.byteLength;
-		// TODO: Implement msg length limiter here
+		if (cbMessageLen > M_LIMIT)
+			console.warn(`Message input length exceeds 2^128 bytes, yet you're not out of RAM... Carry on, I guess.`);
 
 		const mByteSize = utf8MArray.byteLength + (cbKeyLen > 0 ? _BLOCK_BYTES : 0);
 		const M = new ArrayBuffer(mByteSize);
