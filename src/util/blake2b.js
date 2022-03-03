@@ -127,7 +127,7 @@
 		}
 	}
 	
-	function blake2b(msg, key, hashBytes = 32) {
+	function blake2b(msg, key = '', hashBytes = 64) {
 		/* BOILERPLATE */
 
 		// Convert the incoming JavaScript string key into a UTF-8 encoded typed Arrray
