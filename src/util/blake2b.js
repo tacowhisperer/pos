@@ -164,12 +164,18 @@
 			// Then write up to the first 64 bytes of the key to its offset in M
 			for (let i = 0; i < cbKeyLen; i++)
 				bufWrite('Uint8', M, i * _8_BITS, Key[i]);
+
+			console.log('key');
+			console.log(Key);
 		}
 
 		// Finally write the original M to the remaining buffer space
 		const start = cbKeyLen > 0 ? _BLOCK_BYTES : 0;
 		for (let i = start; i < mByteSize; i++)
 			bufWrite('Uint8', M, i * _8_BITS, utf8MArray[i - start]);
+
+		console.log('M');
+		console.log(M);
 
 		/* BLAKE2b */
 
@@ -179,12 +185,14 @@
 			buf64Write(h, i, buf64Read(IV, i));
 
 		// Mix the key size and desired hash length into h[0]
-		const klhl = buf64Read(h, 0) ^ (0x01010000n | (cbKeyLen << 16n) | cbHashLen);
-		buf64Write(h, 0, klhl);
+		buf64Write(h, 0, buf64Read(h, 0) ^ (0x01010000n ^ (cbKeyLen << 8n) ^ cbHashLen));
 
 		// Each time we Compress we record how many bytes have been compressed
 		let cBytesCompressed = 0;
 		let cBytesRemaining = mByteSize;
+
+		console.log(`cBytesCompressed start: ${cBytesCompressed}`);
+		console.log(`cBytesRemaining start: ${cBytesRemaining}`);
 
 		// Compress whole 128-byte chunks of the message, except the last chunk
 		// impl note: the last chunk could potentially have fewer than 128 bytes of data, so give special treatment.
@@ -200,6 +208,11 @@
 			cBytesCompressed += _BLOCK_BYTES;
 			cBytesRemaining -= _BLOCK_BYTES;
 
+			console.log(`cBytesCompressed: ${cBytesCompressed}`);
+			console.log(`cBytesRemaining: ${cBytesRemaining}`);
+			console.log('chunk');
+			console.log(chunk);
+
 			// Compress the chunk into the working vector h
 			Compress(h, chunk, cBytesCompressed, false);
 		}
@@ -208,6 +221,10 @@
 		// impl note: This pair of bufWrites implements the Pad function from the spec. cBytesRemaining <= 128
 		buf64Write(chunk, 0, 0n);
 		buf64Write(chunk, 1, 0n);
+
+		console.log(`bytes remaining: ${cBytesRemaining}`);
+		console.log(`bytes compressed: ${cBytesCompressed}`);
+
 		for (let i = 0; i < cBytesRemaining; i++)
 			bufWrite('Uint8', chunk, i * _8_BITS, bufRead('Uint8', M, i * _8_BITS + cBytesCompressed));
 
