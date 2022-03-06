@@ -94,6 +94,10 @@
 			buf64Write(V, i + 8, buf64Read(IV, i));
 		}
 
+		console.log(`Compress t: ${t}`);
+		console.log(`Compress m:`);
+		console.log(m);
+
 		// Mix the 128-bit counter t into V[12:13]
 		// impl note: t will always be at most 2^64 - 1, so hi(t) will always be 0x0
 		buf64Write(V, 12, buf64Read(V, 12) ^ BigInt(t));
@@ -151,7 +155,7 @@
 		if (cbMessageLen > M_LIMIT)
 			throw `ImplementationError: Message input length exceeds ${M_LIMIT} bytes.`;
 
-		const mByteSize = utf8MArray.byteLength + (cbKeyLen > 0 ? _BLOCK_BYTES : 0);
+		const mByteSize = cbMessageLen + (cbKeyLen > 0 ? _BLOCK_BYTES : 0);
 		const M = new ArrayBuffer(mByteSize);
 
 		// If there was a key supplied, then pad it with trailing zeros to make it 128-bytes and prepend it to message M
@@ -196,13 +200,16 @@
 
 		// Compress whole 128-byte chunks of the message, except the last chunk
 		// impl note: the last chunk could potentially have fewer than 128 bytes of data, so give special treatment.
-		let t = 0;
+		// let t = 0;
 		const chunk = new ArrayBuffer(_BLOCK_BYTES);
 		while (cBytesRemaining > _BLOCK_BYTES) {
 			// Get the next 128 bytes of message M
-			buf64Write(chunk, 0, buf64Read(M, t));
-			buf64Write(chunk, 1, buf64Read(M, t + 1));
-			t += 2;
+			for (let i = 0; i < _BLOCK_BYTES; i++)
+				bufWrite('Uint8', chunk, i * _8_BITS, bufRead('Uint8', M, i * _8_BITS + cBytesCompressed));
+
+			// buf64Write(chunk, 0, buf64Read(M, t));
+			// buf64Write(chunk, 1, buf64Read(M, t + 1));
+			// t += 2;
 
 			// Update byte counts
 			cBytesCompressed += _BLOCK_BYTES;
@@ -215,6 +222,9 @@
 
 			// Compress the chunk into the working vector h
 			Compress(h, chunk, cBytesCompressed, false);
+
+			buf64Write(chunk, 0, 0n);
+			buf64Write(chunk, 1, 0n);
 		}
 
 		// Compress the final bytes from M.
