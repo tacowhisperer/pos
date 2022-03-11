@@ -268,29 +268,71 @@
 		return output.map(b => b.toString(16).padStart(2, '0')).join('');
 	}
 
-	if (typeof mod === 'object' && typeof mod.exports === 'object')
-		mod.exports = blake2b;
-
-	else if (typeof win === 'object' && typeof win.document === 'object')
-		win.mmakr.blake2b = blake2b;
-})(globe);
-
-(function (namespace) {
-	const globe = {
-		global: undefined,
-		import: (lib) => console.log(`default import: ${lib}`),
-		export: (fn) => console.log(`default export: ${fn}`)
+	// Export the blake2b function
+	globe.export(blake2b);
+})((function (namespace) {
+	var globe = {
+		global: null,
+		import: function(lib) {console.log('default import: ' + lib);},
+		export: function(fn) {console.log('default export: ' + fn);}
 	};
 
-	if (typeof module === 'object' && typeof module.exports === 'object') {
-		globe.global = module;
-		globe.import = (lib) => new Promise(require(lib));
-		globe.export = (fn) => module.exports = fn;
-	} else if (typeof window === 'object' && typeof window.document === 'object') {
-		globe.global = window;
-		globe.import = (lib) => import(lib);
+	// Test for compatibility with ES6
+	var es6Compatible = (function () {
+		try {
+			eval('let i = 0; const p = new Promise();');
+			return true;
+		} catch (e) {
+			return false;
+		}
+	})();
 
+	// Ensure that code will not throw a syntax error in < ES6 JavaScript environment
+	if (es6Compatible) {
+		// // Original code that goes inside of the eval
+		// if (typeof module === 'object' && typeof module.exports === 'object') {
+		// 	globe.global = module;
+		// 	globe.import = (lib) => new Promise((resolve, reject) => resolve(require(lib)));
+		// 	globe.export = (fn) => module.exports = fn;
+		// } else if (typeof window === 'object' && typeof window.document === 'object') {
+		// 	globe.global = window;
+		// 	globe.import = (lib) => import(lib);
+		// 	globe.export = (fn) => {export default fn};
+		// }
+
+		var code = "'use strict';" +
+
+		"const globe = {};" +
+
+		"if (typeof module === 'object' && typeof module.exports === 'object') {" +
+			"globe.global = module;" +
+			"globe.import = (lib) => new Promise((resolve, reject) => resolve(require(lib)));" +
+			"globe.export = (fn) => module.exports = fn;" +
+		"} else if (typeof window === 'object' && typeof window.document === 'object') {" +
+			"globe.global = window;" +
+			"globe.import = (lib) => import(lib);" +
+			"globe.export = (fn) => {export default fn;};" +
+		"}" + 
+
+		"globe;";
+
+		globe = eval(code);
+	}
+
+	// < ES6 compatibility in Browser environment
+	else if (typeof window === 'object' && typeof window.document === 'object') {
+		if (!(typeof window[namespace] === 'object'))
+			window[namespace] = {};
+
+		globe.global = window;
+		globe.import = function(lib) {
+			if (!window[namespace][lib])
+				console.error(lib + ' library does not exist in window.' + namespace);
+		};
+		globe.export = function(fn) {
+			window[namespace][fn.name] = fn;
+		};
 	}
 
 	return globe;
-})('mmakr');
+})('mmakr'));
