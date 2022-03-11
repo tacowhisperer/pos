@@ -22,19 +22,40 @@ class Buff {
 	#length;
 
 	/**
+	 * Static generator for an ArrayBuffer, a View linked to the constructed ArrayBuffer, and a length object that
+	 * tracks all available x-bit lengths of the newly generated ArrayBuffer.
+	 * 
+	 * @param {Number} nbytes The number of bytes to allocate in the new ArrayBuffer.
+	 * 
+	 * @return {Object} A new ArrayBuffer nbytes long, a View to manipulate that ArrayBuffer's data, and length info.
+	 */
+	static newArrayBuffer(nbytes) {
+		const buff = new ArrayBuffer(nbytes);
+		const lengths = {};
+
+		for (let wordSize = 1; wordSize <= 16; wordSize *= 2) {
+			if ((nbytes % wordSize) === 0)
+				lengths[`length${8 * wordSize}`] = nbytes / wordSize;
+		}
+
+		return {
+			buffer: buff,
+			view: new DataView(buff),
+			length: lengths
+		};
+	}
+
+	/**
 	 * Constructor for the Buff wrapper class.
 	 * 
 	 * @param {Number} nbytes The size of the buffer in bytes.
 	 */
 	constructor(nbytes) {
-		this.#payload = new ArrayBuffer(nbytes);
-		this.#view = new DataView(this.#payload);
+		const data = Buff.newArrayBuffer(nbytes);
 
-		this.#length = {};
-		for (let wordSize = 1; wordSize <= 16; wordSize *= 2) {
-			if ((nbytes % wordSize) === 0)
-				this.#length[`length${8 * wordSize}`] = nbytes / wordSize;
-		}
+		this.#payload = data.buffer;
+		this.#view = data.view;
+		this.#length = data.length;
 	}
 
 	/**
@@ -168,7 +189,7 @@ class Buff {
 	 * @param {Number} i The index of the 8-bit value location to access.
 	 * @param {Number} v The unsigned 8-bit value to place at location i
 	 * 
-	 * @return {Buff} this instance of Buff.
+	 * @return {Buff} This instance of Buff.
 	 */
 	setUint8(i, v) {
 		if (0 <= i && i < this.length8.valueOf()) {
@@ -186,7 +207,7 @@ class Buff {
 	 * @param {Number} i The index of the 16-bit value location to access.
 	 * @param {Number} v The unsigned 16-bit value to place at location i
 	 * 
-	 * @return {Buff} this instance of Buff.
+	 * @return {Buff} This instance of Buff.
 	 */
 	setUint16(i, v) {
 		if (0 <= i && i < this.length16.valueOf()) {
@@ -205,7 +226,7 @@ class Buff {
 	 * @param {Number} i The index of the 32-bit value location to access.
 	 * @param {Number} v The unsigned 32-bit value to place at location i
 	 * 
-	 * @return {Buff} this instance of Buff.
+	 * @return {Buff} This instance of Buff.
 	 */
 	setUint32(i, v) {
 		if (0 <= i && i < this.length32.valueOf()) {
@@ -224,7 +245,7 @@ class Buff {
 	 * @param {Number} i The index of the 64-bit value location to access.
 	 * @param {Number, BigInt} v The unsigned 64-bit value to place at location i
 	 * 
-	 * @return {Buff} this instance of Buff.
+	 * @return {Buff} This instance of Buff.
 	 */
 	setUint64(i, v) {
 		if (0 <= i && i < this.length64.valueOf()) {
@@ -244,7 +265,7 @@ class Buff {
 	 * @param {Number} i The index of the 128-bit value location to access.
 	 * @param {Number, BigInt} v The unsigned 128-bit value to place at location i
 	 * 
-	 * @return {Buff} this instance of Buff.
+	 * @return {Buff} This instance of Buff.
 	 */
 	setUint128(i, v) {
 		if (0 <= i && i < this.length128.valueOf()) {
@@ -255,6 +276,31 @@ class Buff {
 		}
 
 		throw new RangeError(`The 64-bit index must lie in [0, ${this.length64.valueOf()})`);
+	}
+
+	/**
+	 * Prepends the data of the input Buff object internally to this Buff.
+	 * 
+	 * @param {Buff} buff The buffer whose data we should prepend to this Buff's buffer.
+	 * 
+	 * @return {Buff} This instance of Buff.
+	 */
+	prepend(buff) {
+		// New container for joined data
+		const data = Buff.newArrayBuffer(this.length8 + buff.length8);
+
+		// First copy the external buffer's data
+		for (let i = 0; i < buff.length8; i++)
+			data.view.setUint8(i, buff.getUint8(i), true);
+
+		// Then copy this buffer's data
+		for (let i = buff.length8; i < data.length.length8; i++)
+			data.view.setUint8(i, this.getUint8(i - buff.length8), true);
+
+		// Update this Buff's internal state
+		this.#payload = data.buffer;
+		this.#view = data.view;
+		this.#length = data.length;
 	}
 
 	/**
