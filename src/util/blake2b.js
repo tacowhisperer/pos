@@ -7,7 +7,7 @@
  * Date: Mar 1, 2022
  * @author tacowhisperer
  */
-(function (mod, win) {
+(function (globe) {
 	const _8_BITS = 1;
 	const _16_BITS = 2;
 	const _64_BITS = 8;
@@ -30,11 +30,26 @@
 	}
 
 	function buf64Write(buffer, idx, value) {
-		bufWrite('BigUint64', buffer, idx * _64_BITS, value);
+		// bufWrite('BigUint64', buffer, idx * _64_BITS, value);
+		// bufWrite('BigUint64', buffer, idx * _64_BITS, 0n);
+		console.log(value.toString(2));
+
+		for (let i = 0; i < _64_BITS; i++) {
+			const v = (BigInt(value) >> (BigInt(i) * BigInt(_64_BITS))) & 0x11n;
+
+			console.log(v.toString(2));
+
+			bufWrite('Uint8', buffer, idx * _64_BITS + i * _8_BITS, v);
+		}
 	}
 
 	function buf64Read(buffer, idx) {
-		return bufRead('BigUint64', buffer, idx * _64_BITS);
+		// return bufRead('BigUint64', buffer, idx * _64_BITS);
+		let t = 0n;
+		for (let i = 0; i < _64_BITS; i++)
+			t += BigInt(bufRead('Uint8', buffer, idx * _64_BITS + i * _8_BITS)) << BigInt(i * _8_BITS);
+
+		return t;
 	}
 
 	// Theoretical max message limit
@@ -54,7 +69,7 @@
 		[ 12,  5,  1, 15, 14, 13,  4, 10,  0,  7,  6,  3,  9,  2,  8, 11 ],
 		[ 13, 11,  7, 14, 12,  1,  3,  9,  5,  0, 15,  4,  8,  6,  2, 10 ],
 		[  6, 15, 14,  9, 11,  3,  0,  8, 12,  2, 13,  7,  1,  4, 10,  5 ],
-		[ 10,  2,  8,  4,  7,  6,  1,  5, 15, 11,  9, 14,  3, 12, 13 , 0 ],
+		[ 10,  2,  8,  4,  7,  6,  1,  5, 15, 11,  9, 14,  3, 12, 13 , 0 ]
 	];
 
 	// Transparently obtained IV values used by the BLAKE2b algorithm
@@ -258,4 +273,24 @@
 
 	else if (typeof win === 'object' && typeof win.document === 'object')
 		win.mmakr.blake2b = blake2b;
-})(module, window);
+})(globe);
+
+(function (namespace) {
+	const globe = {
+		global: undefined,
+		import: (lib) => console.log(`default import: ${lib}`),
+		export: (fn) => console.log(`default export: ${fn}`)
+	};
+
+	if (typeof module === 'object' && typeof module.exports === 'object') {
+		globe.global = module;
+		globe.import = (lib) => new Promise(require(lib));
+		globe.export = (fn) => module.exports = fn;
+	} else if (typeof window === 'object' && typeof window.document === 'object') {
+		globe.global = window;
+		globe.import = (lib) => import(lib);
+
+	}
+
+	return globe;
+})('mmakr');
