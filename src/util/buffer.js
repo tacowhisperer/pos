@@ -275,7 +275,7 @@ class Buff {
 			return this;
 		}
 
-		throw new RangeError(`The 64-bit index must lie in [0, ${this.length64.valueOf()})`);
+		throw new RangeError(`The 128-bit index must lie in [0, ${this.length128.valueOf()})`);
 	}
 
 	/**
@@ -296,6 +296,31 @@ class Buff {
 		// Then copy this buffer's data
 		for (let i = buff.length8; i < data.length.length8; i++)
 			data.view.setUint8(i, this.getUint8(i - buff.length8), true);
+
+		// Update this Buff's internal state
+		this.#payload = data.buffer;
+		this.#view = data.view;
+		this.#length = data.length;
+	}
+
+	/**
+	 * Appends the data of the input Buff object internally to this Buff.
+	 * 
+	 * @param {Buff} buff The buffer whose data we should append to this Buff's buffer.
+	 * 
+	 * @return {Buff} This instance of Buff.
+	 */
+	append(buff) {
+		// New container for joined data
+		const data = Buff.newArrayBuffer(this.length8 + buff.length8);
+
+		// First copy this buffer's data
+		for (let i = 0; i < this.length8; i++)
+			data.view.setUint8(i, this.getUint8(i), true);
+
+		// Then copy the external buffer's data
+		for (let i = this.length8; i < data.length.length8; i++)
+			data.view.setUint8(i, buff.getUint8(i - this.length8), true);
 
 		// Update this Buff's internal state
 		this.#payload = data.buffer;
