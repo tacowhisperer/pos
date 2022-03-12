@@ -23,7 +23,8 @@ class Buff {
 
 	/**
 	 * Static generator for an ArrayBuffer, a View linked to the constructed ArrayBuffer, and a length object that
-	 * tracks all available x-bit lengths of the newly generated ArrayBuffer.
+	 * tracks all available x-bit lengths of the newly generated ArrayBuffer. All ArrayBuffers generated through this
+	 * static method are filled with zeros first.
 	 * 
 	 * @param {Number} nbytes The number of bytes to allocate in the new ArrayBuffer.
 	 * 
@@ -31,8 +32,13 @@ class Buff {
 	 */
 	static newArrayBuffer(nbytes) {
 		const buff = new ArrayBuffer(nbytes);
-		const lengths = {};
+		const view = new DataView(buff);
 
+		// Zero fill for new ArrayBuffer
+		for (let i = 0; i < nbytes; i++)
+			view.setUint8(i, 0x00, true);
+
+		const lengths = {};
 		for (let wordSize = 1; wordSize <= 16; wordSize *= 2) {
 			if ((nbytes % wordSize) === 0)
 				lengths[`length${8 * wordSize}`] = nbytes / wordSize;
@@ -40,22 +46,48 @@ class Buff {
 
 		return {
 			buffer: buff,
-			view: new DataView(buff),
+			view: view,
 			length: lengths
 		};
 	}
 
 	/**
-	 * Constructor for the Buff wrapper class.
+	 * Constructor for the Buff wrapper class. All new Buff instances are zero-filled.
 	 * 
-	 * @param {Number} nbytes The size of the buffer in bytes.
+	 * @param {String, Number} data The number of bytes to allocate in the buffer, or the string to encode in the buff.
 	 */
-	constructor(nbytes) {
-		const data = Buff.newArrayBuffer(nbytes);
+	constructor(data) {
+		let buff = {
+			buffer: null,
+			view: {setUint8: () => console.warn('No-op fill.'), getUint8: () => console.warn('No-op get.')},
+			length: {length8: 0}
+		};
 
-		this.#payload = data.buffer;
-		this.#view = data.view;
-		this.#length = data.length;
+		// Simple data allocation with a provided number of bytes
+		if (typeof data === 'number') {
+			buff = Buff.newArrayBuffer(data);
+		}
+
+		// Simple copying of byte-encoded text data into an equally-sized internal buffer state
+		else if (typeof data === 'string') {
+			const txt = new TextEncoder().encode(data);
+			buff = Buff.newArrayBuffer(txt.byteLength);
+
+			for (let i = 0; i < txt.byteLength; i++)
+				buff.view.setUint8(i, txt[i], true);
+		}
+
+		// Same as string, but instead of converting into a uint8 array, just copy the contents into the internal buff
+		else if (data instanceof Buff) {
+			buff = Buff.newArrayBuffer(data.length8);
+
+			for (let i = 0; i < data.length8; i++)
+				buff.view.setUint8(i, data.getUint8(i), true);
+		}
+
+		this.#payload = buff.buffer;
+		this.#view = buff.view;
+		this.#length = buff.length;
 	}
 
 	/**
@@ -301,6 +333,8 @@ class Buff {
 		this.#payload = data.buffer;
 		this.#view = data.view;
 		this.#length = data.length;
+
+		return this;
 	}
 
 	/**
@@ -326,6 +360,18 @@ class Buff {
 		this.#payload = data.buffer;
 		this.#view = data.view;
 		this.#length = data.length;
+
+		return this;
+	}
+
+	/**
+	 * Zeros out the contents of the Buff.
+	 */
+	zero() {
+		for (let i = 0; i < this.length8; i++)
+			this.#view.setUint8(i, 0x00, true);
+
+		return this;
 	}
 
 	/**
